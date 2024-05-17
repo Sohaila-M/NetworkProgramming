@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-@author: ChatRoom ==> Client
-"""
-
 import socket
 import threading
 
