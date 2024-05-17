@@ -14,29 +14,30 @@ server.listen()
 clients = []
 nicknames = []
 
-# Sending Messages To All Connected Clients Except Sender
-def broadcast(message, sender):
+# Sending Messages To All Connected Clients
+def broadcast(message,current_client):
     for client in clients:
-        if client != sender:
-            client.send(message)
-
+        if client==current_client :
+            continue
+        client.send(message)
+        
 # Handling Messages From Clients
 def handle(client):
     while True:
         try:
             # Broadcasting Messages
             message = client.recv(1024)
-            broadcast(message, client)
+            broadcast(message,client)
         except:
             # Removing And Closing Clients
             index = clients.index(client)
             clients.remove(client)
             client.close()
             nickname = nicknames[index]
-            broadcast('{} left!'.format(nickname).encode('ascii'), None)
+            broadcast('{} left!'.format(nickname).encode('ascii'),client)
             nicknames.remove(nickname)
             break
-
+        
 # Receiving / Listening Function
 def receive():
     while True:
@@ -52,11 +53,11 @@ def receive():
 
         # Print And Broadcast Nickname
         print("Nickname is {}".format(nickname))
-        broadcast("{} joined!".format(nickname).encode('ascii'), client)
+        broadcast("{} joined!".format(nickname).encode('ascii'),client)
         client.send('Connected to server!'.encode('ascii'))
 
         # Start Handling Thread For Client
         thread = threading.Thread(target=handle, args=(client,))
         thread.start()
-
+        
 receive()
