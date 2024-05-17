@@ -1,39 +1,36 @@
 import socket
 import threading
 
-# Choosing Nickname
-nickname = input("Choose your nickname: ")
-
-# Connecting To Server
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('127.0.0.1', 7000))
-
-# Listening to Server and Sending Nickname
-def receive():
+def receive_messages(sock):
     while True:
         try:
-            # Receive Message From Server
-            # If 'NICK' Send Nickname
-            message = client.recv(1024).decode('ascii')
-            if message == 'NICK':
-                client.send(nickname.encode('ascii'))
-            else:
-                print(message)
-        except:
-            # Close Connection When Error
-            print("An error occured!")
-            client.close()
+            size_bytes = sock.recv(8)
+            size = int.from_bytes(size_bytes, 'big')
+            data = sock.recv(size).decode('utf-8')
+            print(data)
+        except socket.error:
             break
-        
-# Sending Messages To Server
-def write():
-    while True:
-        message = '{}: {}'.format(nickname, input(''))
-        client.send(message.encode('ascii'))
-        
-# Starting Threads For Listening And Writing
-receive_thread = threading.Thread(target=receive)
-receive_thread.start()
 
-write_thread = threading.Thread(target=write)
-write_thread.start()
+def send_message(sock):
+    while True:
+        message = input()
+        recipient = input("Enter recipient address (host:port): ")
+        data = f"{recipient}:{message}"
+        sock.send(len(data).to_bytes(8,'big'))
+        sock.send(data.encode('utf-8'))
+
+def start_chat():
+    host = 'localhost'
+    port = 8000
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, port)) # connected to server
+
+    receive_thread = threading.Thread(target=receive_messages, args=(sock,))
+    receive_thread.start()
+
+    send_thread = threading.Thread(target=send_message, args=(sock,))
+    send_thread.start()
+
+if __name__ == '__main__':
+    start_chat()
